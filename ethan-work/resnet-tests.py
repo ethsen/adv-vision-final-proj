@@ -106,11 +106,11 @@ def main():
     )
 
     # ---- Model ----
-    model = resnet18(weights=None, num_classes=num_classes)
+    #model = resnet18(weights=None, num_classes=num_classes)
     # If you later re-enable pretrained:
-    # from torchvision.models import ResNet18_Weights
-    # model = resnet18(weights=ResNet18_Weights.IMAGENET1K_V1)
-    # model.fc = nn.Linear(model.fc.in_features, num_classes)
+    from torchvision.models import ResNet18_Weights, ResNet34_Weights, ResNet50_Weights
+    model = resnet50(weights=ResNet50_Weights.IMAGENET1K_V2)
+    model.fc = nn.Linear(model.fc.in_features, num_classes)
     model.to(device)
 
     head_params = list(model.fc.parameters())
@@ -127,7 +127,7 @@ def main():
 
     # ---- Train loop ----
     history = {"epoch": [], "train_loss": [], "val_loss": [], "train_acc": [], "val_acc": []}
-    best_acc, best_path = 0, out_dir / "best_resnet18.pt"
+    best_acc, best_path = 0, out_dir / "best_resnet50.pt"
 
     for epoch in range(1, args.epochs+1):
         model.train()
@@ -140,7 +140,7 @@ def main():
             loss.backward()
             opt.step()
 
-            tot_loss += float(loss) * x.size(0)
+            tot_loss += float(loss.item()) * x.size(0)
             tot_correct += (out.argmax(1) == y).sum().item()
             tot += x.size(0)
         scheduler.step()
@@ -197,9 +197,6 @@ def main():
                 f"{history['val_loss'][i]:.6f}",
                 f"{history['val_acc'][i]:.6f}",
             ])
-
-    # NOTE: removed metrics.pt save per your request
-    # torch.save(history, out_dir / "metrics.pt")
 
     epochs = history["epoch"]
     train_loss, val_loss = history["train_loss"], history["val_loss"]
